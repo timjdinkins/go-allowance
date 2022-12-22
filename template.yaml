@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  GoAllowanceAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+
+  GetAllAccounts:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 3
+      CodeUri: ./cmd/lambdas/getAll
+      Handler: main
+      Runtime: go1.x
+      FunctionUrlConfig:
+        AuthType: NONE
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AllowanceTable
+      Events:
+        GetAll:
+          Type: Api
+          Properties:
+            Path: /accounts/{familyId}
+            Method: GET
+            RestApiId: !Ref GoAllowanceAPI
+
+  GetAccountById:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 3
+      CodeUri: ./cmd/lambdas/getById
+      Handler: main
+      Runtime: go1.x
+      FunctionUrlConfig:
+        AuthType: NONE
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AllowanceTable
+      Events:
+        GetById:
+          Type: Api
+          Properties:
+            Path: /accounts/{familyId}/{id}
+            Method: GET
+            RestApiId: !Ref GoAllowanceAPI
+
+  CreateTransaction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 3
+      CodeUri: ./cmd/lambdas/createTransaction
+      Handler: main
+      Runtime: go1.x
+      FunctionUrlConfig:
+        AuthType: NONE
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AllowanceTable
+      Events:
+        GetById:
+          Type: Api
+          Properties:
+            Path: /accounts/{familyId}/{id}
+            Method: PUT
+            RestApiId: !Ref GoAllowanceAPI
+
+  AllowanceTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Allowance
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
